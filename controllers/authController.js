@@ -1,38 +1,36 @@
 const User = require('../DB/Models/Users')
 const  {uid}= require('uid')
+const asyncWrapper =require('../middlewares/asyncWrapper')
+const { createError } = require('../errors/customError')
 
 
 
-const createUser= async(req,res)=>{
+const createUser= asyncWrapper( async(req,res,next)=>{
 req.body._id=uid(24)
 
-    try {
         const user=  await User.find({email:req.body.email})
 
             if(user.length!==0){
-                return res.status(404).json({success:false,msg:`user already exists `})
+                return next(createError('user already exists',401))
                 }
           await User.create(req.body)
         res.status(201).json({success:true,user:req.body})
-    } catch (error) {
-        res.status(401).json(error.errors)
-        console.log(error)
-    }
+    
+    })
 
-    }
-
-const getUser=async(req,res)=>{
+const getUser=  asyncWrapper( async(req,res,next)=>{
 
 
-try {
   const user=  await User.find({email:req.body.email})
   if(user.length<1){
-  return res.status(404).json({success:false,msg:`email not found`})
+ 
+  return next(createError('email not found',404))
   }
   else{
     const user=  await User.find({email:req.body.email,password:req.body.password})
     if(user.length<1){
-        return res.status(404).json({success:false,msg:`passord is incorrect`})
+       
+  return next(createError('incorrect password',404))
         }
   }
 
@@ -40,12 +38,9 @@ try {
     res.status(200).json({success:true,user:{uid:user[0]._id,name:user[0].name,email:user[0].email}})
 
 
-} catch (error) {
 
-      res.status(401).json(error.errors)
-}
 
-}
+})
 
 
 
